@@ -33,6 +33,15 @@ server.get('/location', (req, res)=>{
   res.send(locationObject);
 });
 
+server.get('/weather', (req, res) =>{
+  const data = weatherData.data;
+  let arrOfWeather = [];
+  data.forEach(value =>{
+    arrOfWeather.push(new Weather(value));
+  });
+  res.send(arrOfWeather);
+});
+
 
 function Location(obj){
   this.search_query = "Lynnwood";
@@ -40,6 +49,15 @@ function Location(obj){
   this.latitude = obj[0].lat;
   this.longitude = obj[0].lon;
 }
+
+function Weather(obj){
+  this.forcast = obj.weather.description;
+  this.time = obj.datetime;
+}
+
+server.get('*', (req, res)=>{
+  res.status(404).send('<img style="background-size:cover;" src="https://i2.wp.com/learn.onemonth.com/wp-content/uploads/2017/08/1-10.png?w=845&ssl=1">');
+});
 
 //start listening on the port 
 server.listen(PORT, ()=>{
