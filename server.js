@@ -20,7 +20,8 @@ server.use(cors());
 //the home route of the server
 server.get('/', (req, res)=>{
   //sending response as moving header in the main route
-  res.send("<marquee><h1>Welcome To The Home Page<h1><marquee>");
+  //res.send("<marquee><h1>Welcome To The Home Page<h1><marquee>");
+  res.send("Home Page");
 });
 
 //server.get('/location', getLocationData);
@@ -29,4 +30,4 @@ server.get('/', (req, res)=>{
 //start listening on the port 
 server.listen(PORT, ()=>{
   console.log(`Listening on port ${PORT} ...`);
-})
+});
