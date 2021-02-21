@@ -12,7 +12,7 @@ require('dotenv').config();
 const cors = require('cors');
 
 //the port of the server
-const PORT = process.env.PORT_env;
+const PORT = process.env.PORT;
 
 //make the server open for any website to make request
 server.use(cors());
