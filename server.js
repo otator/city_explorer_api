@@ -28,6 +28,6 @@ server.get('/', (req, res)=>{
 
 
 //start listening on the port 
-// server.listen(PORT, ()=>{
-//   console.log(`Listening on port ${PORT} ...`);
-// });
+server.listen(PORT, ()=>{
+  console.log(`Listening on port ${PORT} ...`);
+});
