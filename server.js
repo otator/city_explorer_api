@@ -1,5 +1,9 @@
 'use strict';
 
+//location data
+const locationData = require('./data/location.json');
+const weatherData = require('./data/weather.json');
+
 //importing the express package
 const express = require('express');
 
@@ -24,8 +28,18 @@ server.get('/', (req, res)=>{
   res.send("Home Page");
 });
 
-//server.get('/location', getLocationData);
+server.get('/location', (req, res)=>{
+  const locationObject = new Location(locationData);
+  res.send(locationObject);
+});
 
+
+function Location(obj){
+  this.search_query = "Lynnwood";
+  this.formatted_query = obj[0].display_name;
+  this.latitude = obj[0].lat;
+  this.longitude = obj[0].lon;
+}
 
 //start listening on the port 
 server.listen(PORT, ()=>{
