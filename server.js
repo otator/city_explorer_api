@@ -23,7 +23,7 @@ server.get('/', (req, res)=>{
   res.send("<marquee><h1>Welcome To The Home Page<h1><marquee>");
 });
 
-server.get('/location', getLocationData);
+//server.get('/location', getLocationData);
 
 
 //start listening on the port 
