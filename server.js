@@ -90,17 +90,17 @@ server.get('/weather', (req, res) =>{
 server.get('/parks', (req,res)=>{
   //https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=11dTachWGrHzyL6oqfCTEmvf70VTCFDtpP5ahOck
   const URL = `https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=${PARK}`;
-  let arrOfParks;
+  let arrOfParks=[];
   superagent.get(URL)
   .then(parksData=>{
     // let data = JSON.parse(parksData.text).data[0];
     let datax = JSON.parse(parksData.text).data[0];
-    res.send(datax);
+    // res.send(datax.url);
 
     // let arrOfParks = data.map(value => new Park(value));
-    // arrOfParks.push(new Park(data));
+    arrOfParks.push(new Park(datax));
     
-    // res.send(arrOfParks);
+    res.send(arrOfParks);
   })
   .catch(()=>{
     res.send('Error in parks code');
@@ -112,8 +112,8 @@ server.get('/parks', (req,res)=>{
 function Park(obj){
   this.name = obj.fullName;
   this.address = Object.values(obj.addresses[0]).slice(0,4).join();
-  this.fee = obj.entranceFees.cost;
-  this.description = obj.entranceFees.description;
+  this.fee = obj.entranceFees[0].cost;
+  this.description = obj.entranceFees[0].description;
   this.url = obj.url;
 }
 
