@@ -24,19 +24,22 @@ server.use(cors());
 const superagent = require('superagent');
 const MY_KEY = process.env.MY_KEY;
 
+const WEATHER_KEY = process.env.WEATHER_KEY;
+
 //the home route of the server
 server.get('/', (req, res)=>{
   //sending response as moving header in the main route
   //res.send("<marquee><h1>Welcome To The Home Page<h1><marquee>");
   res.send("Home Page");
 });
-
+let city;
 server.get('/location', (req, res)=>{
-  const city = req.query.city;
-  const URL = `https://us1.locationiq.com/v1/search.php?key=${MY_KEY}&q=${city}&format=json`;
+  city = req.query.city;
+  let URL = `https://us1.locationiq.com/v1/search.php?key=${MY_KEY}&q=${city}&format=json`;
   // console.log(URL);
   superagent.get(URL)
   .then( locationData=>{
+    // res.send(locationData);
     const locationObject = new Location(city, locationData.body[0]);
     res.send(locationObject);
   })
@@ -45,14 +48,24 @@ server.get('/location', (req, res)=>{
   })
 });
 
-// server.get('/weather', (req, res) =>{
-//   const data = weatherData.data;
-//   let arrOfWeather = [];
-//   data.forEach(value =>{
-//     arrOfWeather.push(new Weather(value));
-//   });
-//   res.send(arrOfWeather);
-// });
+server.get('/weather', (req, res) =>{
+  let arrOfWeather = [];
+  // let city = req.query.city;
+  let datax;
+  let URL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${city}&key=${WEATHER_KEY}`;
+  superagent.get(URL)
+  .then(weatherData =>{
+    datax = JSON.parse(weatherData.text).data;
+    arrOfWeather=datax.map(value=>new Weather(value));
+    res.send(arrOfWeather);
+
+    // return arrOfWeather;
+
+  })
+  .catch(()=>{
+    res.send('Error in weather code');
+  });
+});
 
 
 
@@ -64,7 +77,7 @@ function Location(city, obj){
 }
 
 function Weather(obj){
-  this.forcast = obj.weather.description;
+  this.forecast = obj.weather.description;
   this.time = obj.datetime;
 }
 
