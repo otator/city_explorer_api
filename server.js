@@ -26,8 +26,9 @@ const MY_KEY = process.env.MY_KEY;
 const WEATHER_KEY = process.env.WEATHER_KEY;
 const PARK = process.env.PARK;
 const pg =require('pg');
-const client = new  pg.Client({ connectionString: process.env.DATABASE_URL,   ssl: { rejectUnauthorized: false } });
-// const client = new  pg.Client(process.env.DATABASE_URL);
+// const client = new  pg.Client({ connectionString: process.env.DATABASE_URL,   ssl: { rejectUnauthorized: false } });
+const client = new  pg.Client(process.env.DATABASE_URL);
+
 
 
 //the home route of the server
