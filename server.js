@@ -25,6 +25,10 @@ const superagent = require('superagent');
 const MY_KEY = process.env.MY_KEY;
 const WEATHER_KEY = process.env.WEATHER_KEY;
 const PARK = process.env.PARK;
+const pg =require('pg');
+const client = new  pg.Client({ connectionString: process.env.DATABASE_URL,   ssl: { rejectUnauthorized: false } });
+// const client = new  pg.Client(process.env.DATABASE_URL);
+
 
 //the home route of the server
 server.get('/', (req, res)=>{
@@ -37,15 +41,45 @@ server.get('/location', (req, res)=>{
   city = req.query.city;
   let URL = `https://us1.locationiq.com/v1/search.php?key=${MY_KEY}&q=${city}&format=json`;
   // console.log(URL);
-  superagent.get(URL)
-  .then( locationData=>{
-    // res.send(locationData);
-    const locationObject = new Location(city, locationData.body[0]);
-    res.send(locationObject);
-  })
-  .catch(()=>{
-    res.status(500).send("Error occurred");
-  })
+
+  let found = false;
+  let SQL  = `select * from location;`;
+  client.query(SQL)
+  .then(results =>{
+    if(results.rows.length){
+        for(let value = 0; value<results.rows.length; value++){
+        // console.log("++++"+value.city_name.toLowerCase(),city.toLowerCase()+"++++")
+        if(results.rows[value].city_name.toLowerCase() === city.toLowerCase()){
+          found = true;
+          // console.log("Found = ", found);
+          console.log("found city in database");
+
+          let locationObject = new Location(city, results.rows[value]);
+          res.send(locationObject);
+          // console.log("Results from database => ", locationObject);
+          break;
+        }
+      }
+    }
+    if(!found){
+      superagent.get(URL)
+      .then( locationData=>{
+        // res.send(locationData);
+        let locationObject = new Location(city, locationData.body[0]);
+        
+        // console.log(locationObject.formatted_query);
+        res.send(locationObject);
+        let SQL = `insert into location values ($1, $2, $3, $4);`;
+        let safeData = [locationObject.search_query, locationObject.formatted_query, locationObject.longitude, locationObject.latitude];
+        client.query(SQL, safeData).then(()=> console.log("row inserted successfully")).catch(error=> console.log("Error in insert",error.message));
+      })
+      .catch(()=>{
+        res.status(500).send("Error occurred");
+      })
+    }
+  }).catch(error => console.log("Error in select: ", error.message));
+
+  
 });
 
 server.get('/weather', (req, res) =>{
@@ -88,17 +122,19 @@ server.get('/weather', (req, res) =>{
 */
 
 server.get('/parks', (req,res)=>{
-  //https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=11dTachWGrHzyL6oqfCTEmvf70VTCFDtpP5ahOck
-  const URL = `https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=${PARK}`;
+  let city = req.query.search_query;
+  // const URL = `https://developer.nps.gov/api/v1/parks?q=${city}&api_key=${PARK}`;
+  const URL = `https://developer.nps.gov/api/v1/parks?q=${city}&api_key=${PARK}`;
+
   let arrOfParks=[];
   superagent.get(URL)
   .then(parksData=>{
     // let data = JSON.parse(parksData.text).data[0];
-    let datax = JSON.parse(parksData.text).data[0];
+    // let datax = JSON.parse(parksData.text).data[0];
     // res.send(datax.url);
-
-    // let arrOfParks = data.map(value => new Park(value));
-    arrOfParks.push(new Park(datax));
+    let data = parksData.body.data;
+    let arrOfParks = data.map(value => new Park(value));
+    // arrOfParks.push(new Park(datax));
     
     res.send(arrOfParks);
   })
@@ -136,6 +172,13 @@ server.get('*', (req, res)=>{
 });
 
 //start listening on the port 
-server.listen(PORT, ()=>{
+client.connect()
+.then(()=> {
+  server.listen(PORT, ()=>{
   console.log(`Listening on port ${PORT} ...`);
-});
+  });
+})
+.catch(error=>{
+  console.log('Error in connection: ', error.message);
+})
+
