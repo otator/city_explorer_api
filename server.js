@@ -25,8 +25,13 @@ const superagent = require('superagent');
 const MY_KEY = process.env.MY_KEY;
 const WEATHER_KEY = process.env.WEATHER_KEY;
 const PARK = process.env.PARK;
+const MOVIES_KEY = process.env.MOVIES_KEY;
+const YELP_KEY = process.env.YELP_KEY;
 const pg =require('pg');
+//this line of code for connection from heroku, Uncomment this line when you deploy the changes to heroku
 const client = new  pg.Client({ connectionString: process.env.DATABASE_URL,   ssl: { rejectUnauthorized: false } });
+
+//this line of code to test your server locally. Comment this line when you upload the changes to heroku.
 // const client = new  pg.Client(process.env.DATABASE_URL);
 
 
@@ -102,25 +107,6 @@ server.get('/weather', (req, res) =>{
   });
 });
 
-/*
-[
-    {
-     "name": "Klondike Gold Rush - Seattle Unit National Historical Park",
-     "address": "319 Second Ave S." "Seattle" "WA" "98104",
-     "fee": "0.00",
-     "description": "Seattle flourished during and after the Klondike Gold Rush. Merchants supplied people from around the world passing through this port city on their way to a remarkable adventure in Alaska. Today, the park is your gateway to learn about the Klondike Gold Rush, explore the area's public lands, and engage with the local community.",
-     "url": "https://www.nps.gov/klse/index.htm"
-    },
-    {
-     "name": "Mount Rainier National Park",
-     "address": ""55210 238th Avenue East" "Ashford" "WA" "98304",
-     "fee": "0.00"
-     "description": "Ascending to 14,410 feet above sea level, Mount Rainier stands as an icon in the Washington landscape. An active volcano, Mount Rainier is the most glaciated peak in the contiguous U.S.A., spawning five major rivers. Subalpine wildflower meadows ring the icy volcano while ancient forest cloaks Mount Rainier’s lower slopes. Wildlife abounds in the park’s ecosystems. A lifetime of discovery awaits.",
-     "url": "https://www.nps.gov/mora/index.htm"
-    },
-    ...
-] 
-*/
 
 server.get('/parks', (req,res)=>{
   let city = req.query.search_query;
@@ -144,7 +130,72 @@ server.get('/parks', (req,res)=>{
   })
 
 
-});
+});//end of parks route function
+
+server.get('/movies', (req, res)=>{
+  // console.log(req.query);
+  let URL = `https://api.themoviedb.org/3/search/movie?api_key=${MOVIES_KEY}&query=${req.query.search_query}`;
+  let arrOfMovies = [];
+  superagent.get(URL)
+  .then(data=>{
+    // res.send("Check your logs")
+    arrOfMovies = data.body.results.map(value => new Movie(value));
+    // let result = results.body;
+
+    // let newMovie = new Movie(result);
+    // console.log(newMovie);
+    res.send(arrOfMovies)
+
+  })
+  .catch((error)=>{
+    console.log("Erroer in data movies route", error.message);
+  })
+
+});//end of movies route
+
+
+let numberOfItemsPerPage = 5;
+let offset = 0;
+server.get('/yelp', (req, res)=>{
+  // console.log('Page number:',req.query.page);
+  
+  let URL = `https://api.yelp.com/v3/businesses/search?term=restaurant&location=${req.query.search_query}&limit=${numberOfItemsPerPage}&offset=${offset}`;
+  let arrOfRestaurants = [];
+  
+  superagent.get(URL)
+  .set({'Authorization':`Bearer ${YELP_KEY}`})
+  .then(data=>{
+    
+    offset+=numberOfItemsPerPage;
+    arrOfRestaurants = data.body.businesses.map(value => new Yelp(value));
+    console.log(arrOfRestaurants);
+    res.send(arrOfRestaurants);
+
+  })
+  .catch(error=>{
+    console.log('Error in yelp api', error.message);
+  })
+
+});//end of yelp route.
+
+function Yelp(obj){
+  this.name = obj.name;
+  this.image_url = obj.image_url;
+  this.price = obj.price;
+  this.rating = obj.rating;
+  this.url = obj.url;
+}
+
+
+function Movie(obj){
+  this.title=obj.title;
+  this.overview = obj.overview;
+  this.average_votes= obj.vote_average;
+  this.total_votes = obj.vote_count;
+  this.image_url = 'https://image.tmdb.org/t/p/w500'+ obj.poster_path;
+  this.popularity = obj.popularity;
+  this.released_on = obj.release_date;
+}
 
 function Park(obj){
   this.name = obj.fullName;
